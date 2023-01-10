@@ -1,0 +1,93 @@
+---------GROUP BY---------
+1. Listar 15 estudiantes, los cuales serán ordenados por la nota de su examen de admisión de forma descendente y que además han aspirado a cada carrera que sea una carrera de licenciatura utilizando group by, considerando que se deben unir 5 tablas: carrera, postular, pertenece, y examen, y aspirante. Mostrar las columnas de la cédula de ciudadanía del aspirante, los nombres del aspirante, los apellidos del aspirante, su telefono, además de la nota del examen ordenado de forma descendente, y su carrera.
+
+SELECT asp.CcAs as CedulaCiudadania, asp.NmAs as Nombres, asp.LstNmAs as Apellidos, asp.PhnAs, exa.ScrExa as NotaExamen, car.NmCar as NombreCarrera
+FROM pertenece AS per
+INNER JOIN aspirantes as asp ON asp.CcAs = per.CcAs
+INNER JOIN examen as exa ON exa.IdExa = per.IdExa
+INNER JOIN postular as post ON post.CCAs = per.CCAs
+INNER JOIN carreras as car ON car.IdCar = post.IdCar
+WHERE car.NmCar LIKE 'Licenciatura%'
+GROUP BY car.IdCar
+ORDER BY exa.ScrExa desc
+limit 15;
+
+2. En el caso del segundo enunciado se tiene que, se debe contar el número de parroquias que existen en cada provincia del Ecuador, considerando que además se debe unir con una tercera tabla llamada canton. Mostrar las columnas del id de la provincia, el nombre de la provincia, y el número de parroquias por provincia.
+
+SELECT pro.IdPro as NombreProvincia, pro.NmPro as NombreProvincia, count(pro.IdPro) as NumeroProvincias FROM parroquia as par
+INNER JOIN canton as can ON can.IdCan = par.IdCan
+INNER JOIN provincia as pro ON pro.IdPro = can.IdPro
+GROUP BY pro.IdPro;
+
+3. Agrupar y enumerar el número de carreras que existen por cada institución educativa que se encuentre en estado activo, considerando que se deben unir cuatro tablas: institucion educativa, sede, consta, y carrera. Mostrar en pantalla el ID de la institución educativa, su nombre, el tipo de IE, su estado, y el número de carreras que existen por cada institución.
+
+SELECT ROW_NUMBER() OVER(ORDER BY ie.IdIe ASC) AS NumeroIE, ie.IdIe as IdInstitucion, ie.NmIe as NombreInstitucion, ie.EmIe as EmailInstitucion, ie.TypIe as TipoInstitucion, COUNT(ie.IdIe) as NumeroCarreras FROM institucioneducativa AS ie
+INNER JOIN carreras AS car ON car.IdCar = con.IdCar
+INNER JOIN consta as con on ie.IdIe = con.IdIe
+INNER JOIN sedes AS se ON se.IdSe = con.IdSe
+WHERE StsIe = 'Activo'
+GROUP BY ie.IdIe;
+
+---------HAVING---------
+4. Encontrar las parroquias en las que las sedes de las instituciones educativas acumulen más de 105 carreras en todo su territorio. Se debe mostrar el de la parroquia, el nombre del parroquia, y el número de carreras.
+
+SELECT par.IdPar AS IdParroquia,par.NmPar AS NombreParroquia, COUNT(car.IdCar) AS NumeroCarreras FROM consta AS con
+INNER JOIN carreras AS car ON car.IdCar = con.IdCar
+INNER JOIN sedes AS se ON se.IdSe = con.IdSe
+INNER JOIN parroquia AS par ON par.IdPar = se.IdPar
+GROUP BY par.NmPar
+HAVING COUNT(car.IdCar) > 105;
+
+
+5. Encontrar las provincias que tengan más de 5 parroquias para poder determinar las zonas de más alto impacto en las que se abrirá una nueva sede de una institución educativa. Mostrar el Id de la provincia, el nombre de la provincia y el número de parroquias que posee cada provincia. Se debe unir la tabla provincia, con la tabla canton, y luego con la tabla parroquia mediante el uso de INNER JOIN.
+
+SELECT pro.IdPro, pro.Nmpro, COUNT(pro.IdPro) as NumeroParroquias FROM parroquia as par
+INNER JOIN canton AS can ON can.IdCan = par.IdCan
+INNER JOIN provincia AS pro ON pro.IdPro = can.IdPro
+GROUP BY pro.IdPro
+HAVING COUNT(pro.IdPro) > 5;
+
+6. Hallar el número de cantones que residen a más de 100 instituciones educativas de educación superior. Se debe mostrar el id del cantón, el nombre del cantón y el número de instituciones educativas.
+
+SELECT can.IdCan as IdCanton, can.NmCan as NombreCanton, COUNT(ie.IdIe) as NumeroIE FROM sedes AS se
+INNER JOIN institucioneducativa AS ie ON ie.IdIe = se.IdIe
+INNER JOIN parroquia AS par ON par.IdPar = se.IdPar
+INNER JOIN canton AS can ON can.IdCan = par.IdCan
+GROUP BY ie.IdIe
+HAVING COUNT(ie.idIe) > 100;
+
+---------AGREGACIÓN---------
+
+7. Contar el número de personas que tienen un puntaje de postulación a partir de un examen activo, y encontrar la nota más baja existente de este grupo. Mostrar la columna del número de personas que tienen dicho puntaje de postulación, y la nota más baja existente desde la creación de la base de datos.
+SELECT COUNT(asp.CcAs) as AspirantesExamenActivo, MAX(exa.ScrExa) AS NotaMaxima FROM pertenece AS per
+INNER JOIN aspirantes as asp ON asp.CCAs = per.CcAs
+INNER JOIN examen AS exa ON exa.IdExa = per.IdExa
+INNER JOIN postular AS post ON post.IdExa = per.IdExa
+WHERE exa.StsExa = 'Activo';
+
+
+8. Hallar la suma y el promedio de las notas de los examenes de todos los aspirantes de las carreras de ingeniería, o que se llamen así, desde la creación de la base de datos. Considere que se debe hacer una unión entre las tablas: examen, pertenece, aspirante, postular, y carrera.
+
+SELECT SUM(exa.ScrExa) as Suma, AVG(exa.ScrExa) as PromedioNotas FROM pertenece AS per
+INNER JOIN aspirantes as asp ON asp.CcAs = per.CcAs
+INNER JOIN examen as exa ON exa.IdExa = per.IdExa
+INNER JOIN postular as post ON post.CCAs = per.CCAs
+INNER JOIN carreras as car ON car.IdCar = post.IdCar
+WHERE car.NmCar LIKE 'Ingeniería%';
+
+---------EJERCICIOS ELECCIÓN---------
+9. Listar las sedes educativas que existen en el cantón Quito. Considere que es necesario unir las tablas sede, parroquia, y cantón mediante inner join. Mostrar el nombre de la sede educativa, la descripción de la sede, el telefono, el nombre de la parroquia, y el nombre del cantón.
+
+SELECT Se.NmSe NombreSede, Se.DescSe as DescripcionSede, Se.PhnSe as TelefonoSede, Par.NmPar as NombreParroquia, Can.NmCan as NombreCanton from
+SEDES as Se
+INNER JOIN Parroquia as Par on Par.IdPar = Se.IdPar
+INNER JOIN Canton as Can on Can.IdCan = Par.IdCan
+WHERE Par.IdCan = '8c052ef8-74f7-11ed-884d-0242ac1c000c';
+
+10. Listar los aspirantes que han rendido un examen que se encuentre en estado "activo" para el ingreso a la educación superior pública, y tienen puntajes mayor o igual a 975, dado que aquellos aspirantes que tengan un puntaje dentro de este rango serán premiados con una beca para estudiar en el exterior. Mostrar las columnas de la cédula de ciudadanía del aspirante, los nombres del aspirante, los apellidos del aspirante, su telefono, además de la nota del examen, ordenar los puntajes de forma descendente.
+
+SELECT asp.CcAs as CedulaAspirante, asp.NmAs as Nombres, asp.LstNmAs as Apellidos, asp.EmAs AS Correo, asp.PhnAs AS Telefono, CAST(exa.ScrExa AS INT) AS NotaExamen, exa.StsExa AS EstadoExamen FROM pertenece AS per
+INNER JOIN aspirantes as asp ON asp.CCAs = per.CcAs
+INNER JOIN examen as exa ON exa.IdExa = per.IdExa
+WHERE exa.ScrExa > 975 AND exa.StsExa = 'Activo'
+ORDER BY exa.ScrExa DESC;
